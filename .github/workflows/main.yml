@@ -1,0 +1,39 @@
+pipeline:
+  agent:
+    docker:
+      image: "maven:3.8.1-jdk-11"  # You can use your preferred image for HTML app (e.g., nginx, apache, etc.)
+      label: "docker-agent"
+  
+  environment:
+    GIT_CREDENTIALS_ID: "github-credentials"  # Your Jenkins credentials ID for GitHub access
+
+  stages:
+    - stage: "Checkout"
+      steps:
+        - checkout:
+            scm: true   # This pulls the code from your GitHub repository based on the configuration in the Jenkins job
+
+    - stage: "Build and Deploy"
+      steps:
+        - script:
+            # Command to deploy HTML files, adjust to your needs (e.g., copy files or run build tasks)
+            sh: |
+              echo "Deploying HTML application"
+              cp -r $WORKSPACE/*.html $WORKSPACE/*.css $WORKSPACE/*.js /var/www/html/   # Example to copy files to target directory
+              sudo systemctl restart apache2  # If you're using Apache to serve the HTML app
+            environment:
+              GIT_CREDENTIALS_ID: "${GIT_CREDENTIALS_ID}"
+
+    - stage: "Test"
+      steps:
+        - script:
+            # Example of simple testing, for an HTML app you may test via browser or a simple curl request
+            sh: |
+              echo "Running tests"
+              curl -I http://localhost/index.html  # Test if the deployment is successful by making a request
+
+    - stage: "Clean Up"
+      steps:
+        - script:
+            # Clean up after build if necessary
+            sh: echo "Cleaning up build artifacts"
